@@ -1,0 +1,582 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{CJKutf8}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\graphicspath{ {./images/} }
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan,}
+\urlstyle{same}
+
+\title{A Novel Design of Disturbance Compensator in Active Disturbance Rejection Control }
+
+
+\author{Jong-Su Kang*, Su-Yong Paek, Chung-Ryol Rim\\
+Faculty of Electronics and Automation, Kim Il Sung University, Pyongyang, DPR Korea}
+\date{}
+
+
+\begin{document}
+\maketitle
+
+
+\begin{abstract}
+This article aims to describe a novel design method of disturbance compensator in ADRC (Active Disturbance Rejection Control) based on Lyapunov stability theory. Error-based state equation is used to simplify the ADRC structure. The state feedback controller is designed using LQ (Linear Quadratic) method based on a linearized model. The generalized ESO (Extended State Observer) estimates the nonlinear part, model uncertainty, and external disturbance regarded as "total disturbance." Based on the estimate of the disturbance, disturbance compensator is designed using Lyapunov stability theory. In conventional ADRC, after estimating the disturbance compensator rejects the disturbance. But in this paper, it was not simply rejected. Instead the estimate of the disturbance is used in compensator design to make the Lyapunov candidate decrease more quickly. Our method allowed improved the convergence rate of ADRC. A numerical example and IWP (Inertia Wheel Pendulum) stabilization simulation confirmed the new method for effectiveness evaluation.
+\end{abstract}
+
+Keywords: active disturbance rejection control, generalized extended state observer, Lyapunov stability theory, inertia wheel pendulum.
+
+\section{\begin{CJK}{UTF8}{mj}自抗䍐控制中的一種新型抗挸補償器設計\end{CJK}}
+\begin{abstract}
+\begin{CJK}{UTF8}{mj}摘要\end{CJK}: \begin{CJK}{UTF8}{mj}本文旨在描述一種基於李雅普諾夫穩定性理論的主動抗擾控制擾動補償器設計新\end{CJK} \begin{CJK}{UTF8}{mj}方法\end{CJK}。\begin{CJK}{UTF8}{mj}基於誤差的狀態方程用於簡化主動抗擾控制\end{CJK} \begin{CJK}{UTF8}{mj}結構\end{CJK}。\begin{CJK}{UTF8}{mj}狀態反饋控制器是使用基於線性化\end{CJK} \begin{CJK}{UTF8}{mj}模型的線性二次方法設計的\end{CJK}。\begin{CJK}{UTF8}{mj}廣義擴展狀態觀察者估計非線性部分\end{CJK}、\begin{CJK}{UTF8}{mj}模型不確定性和被視為\end{CJK} “\begin{CJK}{UTF8}{mj}總干擾\end{CJK}”\begin{CJK}{UTF8}{mj}的外部干擾\end{CJK}。\begin{CJK}{UTF8}{mj}在估計擾動的基礎上\end{CJK}, \begin{CJK}{UTF8}{mj}利用李雅普諾夫穩定性理論設計了擾動補償器\end{CJK}。 \begin{CJK}{UTF8}{mj}在傳統的主動抗擾控制\end{CJK} \begin{CJK}{UTF8}{mj}中\end{CJK}, \begin{CJK}{UTF8}{mj}在估計干擾後\end{CJK}, \begin{CJK}{UTF8}{mj}補償器會拒絕乾擾\end{CJK}。\begin{CJK}{UTF8}{mj}但在這篇論文中\end{CJK}, \begin{CJK}{UTF8}{mj}它並沒有\end{CJK} \begin{CJK}{UTF8}{mj}被簡單地拒絕\end{CJK}。\begin{CJK}{UTF8}{mj}相反\end{CJK}，\begin{CJK}{UTF8}{mj}在補償器設計中使用擾動的估計來使李雅普諾夫候選值下降得更快\end{CJK}。 \begin{CJK}{UTF8}{mj}我們的方法可以提高主動抗擾控制\end{CJK} \begin{CJK}{UTF8}{mj}的收斂速度\end{CJK}。\begin{CJK}{UTF8}{mj}一個數值例子和慣性輪擺穩定模擬證實了有\end{CJK} \begin{CJK}{UTF8}{mj}效性評估的新方法\end{CJK}。
+\end{abstract}
+
+\begin{CJK}{UTF8}{mj}关键词\end{CJK}：\begin{CJK}{UTF8}{mj}自抗擾控制\end{CJK}，\begin{CJK}{UTF8}{mj}廣義擴展狀態觀測器\end{CJK}，\begin{CJK}{UTF8}{mj}李雅普諾夫穩定性理論\end{CJK}，\begin{CJK}{UTF8}{mj}慣性輪擺\end{CJK}。
+
+\section{Introduction}
+In recent years, ADRC, which can estimate and reject external disturbances and parameter uncertainty, is attracting several researchers and engineers. ADRC was proposed by Jing-Qing Han in the 1990s, and its main idea is to regard external disturbance and internal uncertainty as 'total disturbance' and estimate and reject them in real time by observer-based feedback compensator $[1,2]$.
+
+ADRC is widely used due to its strong robustness against non-linearity and disturbance and its independence of accurate mathematical models [3, 4]. For example, ADRC was used for hypersonic vehicle control [5], motion control [6], UAV control [7], power system control [8], turbine system [9], and process control [10].
+
+One of the important issues in ADRC is to tune its parameters. NA tuning methods have been proposed. One of the major methods is the optimal method. NA methods such as PSO algorithm, reinforcement learning, multi-object optimization [11] have been proposed. But these are rarely used in process control because of large computational effort. [12] proposed bandwidth-based tuning method for linear ADRC, which is widely used by engineers and researchers. NA varieties based on bandwidth method can be found in [13]. [14] suggested error-based ADRC to make its structure simpler.
+
+In conventional ADRC, after estimating the disturbance compensator rejects the disturbance. But not all disturbances are harmful, and some of them may have a good effect on system dynamics [15]. From this viewpoint, [15] suggested a conditional disturbance negation method that does not cancel all disturbances but selectively rejects only harmful disturbances by analyzing their effectiveness. In [15], disturbance compensator was designed to reject harmful disturbances by making the disturbance term in the derivative of the Lyapunov function be zero.
+
+The magnitude of the derivative of the Lyapunov function determines the decreasing rate of the Lyapunov function. In other words, the greater the derivative of the Lyapunov function, the quicker the Lyapunov function decreases. Thus, in this paper, the disturbance term in the derivative of the Lyapunov function is made to be negative definite one to decrease the Lyapunov function more quickly.
+
+In this paper, error-based ADRC is adopted to make ADRC structure simple. GESO (Generalized Extended State observer) is used to estimate the disturbance. The LQ method made it possible to design a state feedback controller and, using the Lyapunov stability theory, allowed for the design of a disturbance compensator to make the derivative of the Lyapunov function smaller to accelerate the decreasing rate of the error that is considered the main contribution of this paper.
+
+The rest of this paper is organized as follows.
+
+In section 2, a novel design method of disturbance compensator is presented and tested by a case study.
+
+In section 3, simulation and experimental validation for the IWP (Inertia Wheel pendulum) stabilization is presented to show the effectiveness of the proposed method.
+
+\section{Novel Disturbance Compensator Design in ADRC}
+\subsection{Design Method}
+In ADRC, TD (Tracking Differentiator) is used to smooth the change of reference signal to prevent rapid increment in the control effort due to the rapid change in the reference signal. In other words, TD plays its role only when the reference signal changes and has no effect in the other cases. So if the reference signal can be made to be constant, TD will not be needed in ADRC. Transforming the state equation of the system into error-based form enables the reference signal to be constant, because in error-based form, the control object is to make the state zero. So the reference signal could be set to zero to eliminate TD in ADRC.
+Assume that the state equation of the system is given as the following:
+
+$$
+\left\{\begin{array}{l}
+\dot{x}=A x+B_{u} u+B_{f} f(x, d(t)) \\
+y=C x
+\end{array}\right.
+$$
+
+where $x \in R^{n}, u \in R^{m}, d \in R^{p}, y \in R^{r}$ are the system state, control input, external disturbance, and system output, respectively. $f(x, d(t))$ is uncertain function in terms of $x$ and $d . \mathrm{A} \in R^{n \times n}, B_{u} \in R^{n \times m}, B_{f} \in$ $R^{n \times p}, C \in R^{r \times n}$ are system matrices.
+
+Let $r(t)$ is the reference signal.
+
+Introducing state error, $e(t)=x(t)-r(t)$ (1) is transformed into error-based form as the following:
+
+$$
+\left\{\begin{array}{c}
+\dot{e}(t)=A e(t)+B_{u} u(t)+B_{f} f(e+r, d(t)) \\
+\quad+A r(t)-\dot{r}(t) \\
+y(t)=\operatorname{Ce}(t)+\operatorname{Cr}(t)
+\end{array}\right.
+$$
+
+Equation (2) is rewritten by introducing $\bar{e}_{n+1}(t)=$ $B_{f} f(x, d(t))+A r(t)-\dot{r}(t)$ as a new state (let $\left.\dot{\bar{e}}_{n+1}(t)=h(t)\right)$, as the following:
+
+$$
+\left\{\begin{array}{l}
+\dot{\tilde{e}}(t)=\tilde{A} \tilde{e}(t)+\tilde{B}_{u} u(t)+\tilde{B}_{h} h \\
+y(t)=\tilde{C} \tilde{e}(t)+\operatorname{Cr}(t)
+\end{array}\right.
+$$
+
+with
+
+$$
+\begin{aligned}
+& \tilde{A}=\left[\begin{array}{cc}
+A & I_{n \times n} \\
+0_{n \times n} & 0_{n \times n}
+\end{array}\right], \tilde{B}_{u}=\left[\begin{array}{c}
+B_{u} \\
+0_{n \times m}
+\end{array}\right], \\
+& \tilde{C}=\left[\begin{array}{ll}
+C & 0_{r \times n}
+\end{array}\right], \tilde{B}_{h}=\left[\begin{array}{c}
+0_{n \times n} \\
+I_{n \times n}
+\end{array}\right] \\
+& \tilde{e}(t)=\left[e_{1}(t), e_{2}(t), \ldots, e_{n}(t), \bar{e}_{n+1}^{T}(t)\right]^{T}
+\end{aligned}
+$$\$\$
+
+\textbackslash text \{ Generalized ESO for (3) is designed as [17]: \}
+
+\$\$$$
+\dot{\hat{e}}(t)=\tilde{A} \hat{e}(t)+\widetilde{B}_{u} u+L(y-\tilde{C} \hat{e}(t)-\operatorname{Cr}(t))
+$$
+
+where $L \in R^{2 n \times r}$ is the observer gain matrix which is selected such that $\tilde{A}-L \tilde{C}$ is Hurwitz.
+
+Then, 'total disturbance' $\bar{e}_{n+1}$ is approximated as $\bar{e}_{n+1} \approx \hat{e}_{n+1}$.
+
+Assumption 1: $\left(A, B_{u}\right)$ is controllable and $(\tilde{A}, \tilde{C})$ is observable.
+
+The design process of the control effort $u$ is summarized in the following theorem.
+
+Assumption 2: $B_{u}^{T} B_{u}$ is invertible.
+
+Theorem: Under the following feedback control, the system (2) is stable.
+
+$$
+\begin{aligned}
+& u=u_{L Q}+u_{D} \\
+& u_{L Q}=-K_{L Q} e(t) \\
+& u_{D}=\left(B_{u}^{T} B_{u}\right)^{-1} B_{u}^{T}\left(-\Gamma e-\hat{e}_{n+1}\right)
+\end{aligned}
+$$
+
+where $K_{L Q}=R^{-1} B_{u}^{T} P$ is LQ gain for a linearized model of system (2) and $\Gamma \in R^{n \times n}$ is a design parameter (non-negative definite matrix).
+
+$P$ is a positive definite matrix, which is the solution of the following Riccati equation:
+
+$$
+A^{T} P+P A-P B_{u} R^{-1} B_{u}^{T} P+Q=0
+$$
+
+where $Q, R$ are positive definite matrices for LQ controller design.
+
+Proof: Define Lyapunov candidate as the following: $V=e^{T} P e$
+
+where $P$ is the solution of Riccati equation (8).
+
+Then, the derivative of Lyapunov candidate is calculated as the following:
+
+$$
+\dot{V}=\dot{e}^{T} P e+e^{T} p \dot{e}
+$$
+
+Substituting (2), (5), (6), (7) into (10) gives
+
+$\dot{V}=\dot{e}^{T} P e+e^{T} P \dot{e}$
+
+$=\left(e^{T} A^{T}+u^{T} B_{u}^{T}+\bar{e}_{n+1}^{T}\right) P e$
+
+$+e^{T} P\left(A e+B_{u} u+\bar{e}_{n+1}\right)$
+
+$=\left(e^{T} A^{T}-e^{T} K_{L Q}^{T} B_{u}^{T}+u_{D}^{T} B_{u}^{T}+\bar{e}_{n+1}^{T}\right) P e$
+
+$+e^{T} P\left(A e-B_{u} K_{L Q} e+B_{u} u_{D}+\bar{e}_{n+1}\right)$
+
+$=e^{T}\left(A^{T} P-K_{L Q}^{T} B_{u}^{T} P+P A-P B_{u} K_{L Q}\right) e$
+
+$+\left(u_{D}^{T} B_{u}^{T}+\bar{e}_{n+1}^{T}\right) P e+e^{T} P\left(B_{u} u_{D}+\bar{e}_{n+1}\right)$
+
+The first term in (11) can be rewritten as the following:
+
+$$
+\begin{aligned}
+& e^{T}\left(A^{T} P-K_{L Q}^{T} B_{u}^{T} P+P A-P B_{u} K_{L Q}\right) e \\
+& \quad=e^{T}\left(A^{T} P-P B_{u} R^{-1} B_{u}^{T} P+P A-P B_{u} R^{-1} B_{u}^{T} P\right) e \\
+& \quad=e^{T}\left(-Q-P B_{u} R^{-1} B_{u}^{T} P\right) e
+\end{aligned}
+$$
+
+(12) is negative definite because $Q$ is positive definite matrix and $P B_{u} R^{-1} B_{u}^{T} P$ is also a positive definite one. So the first term in (11) is negative definite.
+
+Multiplying both sides of (7) by, $B_{u}^{T} B_{u}$ one can get:
+
+$B_{u} u_{D}+\hat{e}_{n+1}=-\Gamma e$
+
+Then, the second and third terms in (11) become $-e^{T} \mathrm{P} \Gamma e$ and (11) can be rewritten as the following:
+
+$\dot{V}=-e^{T} Q e-e^{T} P B_{u} R^{-1} B_{u}^{T} P e-2 e^{T} \Gamma P e 0$
+
+This means that the closed-loop system was stable.
+
+Remark 1: In case of $\Gamma=0_{n \times n}$ the disturbance compensator is the same as that one in the conventional ADRC.
+
+Remark 2: The bigger $\Gamma$ is, the smaller $\dot{V}$ and the faster the convergence rate becomes, but the greater the control effort becomes. So $\Gamma$ should be chosen as the trade-off between the magnitude of the control effort and the convergence rate.
+
+\subsection{Case Study}
+Consider the second-order system given by [16]:
+
+$$
+\left\{\begin{array}{c}
+\dot{x}_{1}(t)=x_{2}(t) \\
+\dot{x}_{2}(t)=\frac{x_{1}+x_{2}+\sin x_{1}+\sin x_{2}}{40}+d(t)+10.5 u(t) \\
+y(t)=x_{1}
+\end{array}\right.
+$$
+
+where $d(t)$ is the disturbance and control gain is 10.5 and its nominal value is 10 .
+
+Let $v(t)$ is the reference signal, then the state error and its derivative are given as $e_{1}(t)=x_{1}(t)-v(t)$, $e_{2}(t)=\dot{e}_{1}(t)=x_{2}(t)-\dot{v}(t)$.
+
+Transforming (15) into error-based form gives
+
+$$
+\left\{\begin{array}{c}
+\dot{e}_{1}(t)=e_{2}(t) \\
+\dot{e}_{2}(t)=\frac{1}{40} e_{1}+\frac{1}{40} e_{2} \\
+{\left[\frac{1}{40}\left(v+\dot{v}+\sin \left(e_{1}+v\right)+\sin \left(e_{2}+\dot{v}\right)\right)\right.} \\
+-\ddot{v}(t)+d(t)+0.5 u(t)]+10 u(t)
+\end{array}\right.
+$$
+
+The LQ gain for (16) with, $Q=\left[\begin{array}{cc}20 & 0 \\ 0 & 1\end{array}\right] R=100$ is given as $K_{L Q}=\left[\begin{array}{ll}0.449 & 0.318\end{array}\right]$.
+
+In (16), the term in the bracket can be defined as a new state $e_{3}(t)$ (let $\dot{e}_{3}(t)=h(t)$ ). Then, the extended state equation is described as the following:
+
+$$
+\left\{\begin{array}{c}
+\dot{e}_{1}(t)=e_{2}(t) \\
+\dot{e}_{2}(t)=\frac{1}{40} e_{1}(t)+\frac{1}{40} e_{2}(t)+10 u(t)+e_{3}(t) \\
+\dot{e}_{3}(t)=h(t) \\
+y(t)=e_{1}(t)+v(t)
+\end{array}\right.
+$$
+
+The generalized ESO for (17) can be designed as (4) with the following:
+
+$$
+\begin{aligned}
+& \tilde{A}=\left[\begin{array}{ccc}
+0 & 1 & 0 \\
+\frac{1}{40} & \frac{1}{40} & 1 \\
+0 & 0 & 0
+\end{array}\right], \tilde{B}_{u}=\left[\begin{array}{c}
+0 \\
+10 \\
+0
+\end{array}\right], \\
+& \tilde{C}=\left[\begin{array}{lll}
+1 & 0 & 0
+\end{array}\right], L=\left[\begin{array}{c}
+1200 \\
+480030 \\
+64000000
+\end{array}\right]
+\end{aligned}
+$$
+
+Observer gain matrix $L$ is designed to place the eigenvalue of $\tilde{A}-L \tilde{C}$ at $P=\left[\begin{array}{lll}-400 & -400 & -400\end{array}\right]$.
+
+It follows from (7) that disturbance-compensating term is calculated as
+
+$$
+u_{D}=\left(\left[\begin{array}{ll}
+0 & 10
+\end{array}\right]\left[\begin{array}{c}
+0 \\
+10
+\end{array}\right]\right)^{-1}\left[\begin{array}{ll}
+0 & 10
+\end{array}\right]\left(-\Gamma\left[\begin{array}{c}
+\hat{e}_{1} \\
+\hat{e}_{2}
+\end{array}\right]-\left[\begin{array}{c}
+0 \\
+\hat{e}_{3}
+\end{array}\right]\right)
+$$
+
+The performance of the disturbance attenuation performance was tested. For this purpose, $d(t)=$ $2 \sin t$ and $d(t)=\left\{\begin{array}{c}10.1<t<0.5 \\ 0 \text { else }\end{array}\right.$ are imposed on the input side, respectively, while the control input is bounded as $|u(t)| \leq 10$ and the reference signal is given as $v(t)=0$.
+
+Fig. 1 shows the simulation result for the case of $d(t)=1, t \in(0.1,0.5)$ and Fig. 2 shows the result for the case of $d(t)=2 \sin t$. It can be concluded from Fig. 1 and Fig. 2 that the proposed methods have better performance than conventional ADRC in disturbance rejection. Especially, it has the best performance of the biggest $\Gamma$.
+
+The IAE index was calculated to assess the performance of the control system.
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-3(1)}
+\end{center}
+
+Fig. 1 Simulation result, $d(t)=1, t \in(0.1,0.5)$
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-3}
+\end{center}
+
+Fig. 2 Simulation result, $d(t)=2 \sin t$
+
+Table 1 shows the IAE indices. It can be concluded from Table 1 that IAE indices for the proposed method are smaller than those for conventional ADRC and the bigger the $\Gamma$ is, the smaller the IAE index is.
+
+\begin{center}
+\begin{tabular}{llll}
+\multicolumn{3}{c}{Table 1 IAE indices} &  \\
+\hline
+ & $\boldsymbol{d}(\boldsymbol{t})=\mathbf{2 s i n} \boldsymbol{t}$ & $\begin{array}{l}\boldsymbol{d}(\boldsymbol{t})=\mathbf{1} \\ \boldsymbol{t} \in(\mathbf{0 . 1} \mathbf{0 . 5})\end{array}$ &  \\
+\hline
+Conventional ADRC & $1.845 \mathrm{e}-02$ & $1.567 \mathrm{e}-03$ &  \\
+Proposed & $\Gamma=\operatorname{diag}[1,1]$ & $1.592 \mathrm{e}-02$ & $1.285 \mathrm{e}-03$ \\
+Method & $\Gamma=\operatorname{diag}[1,10]$ & $6.447 \mathrm{e}-03$ & $4.342 \mathrm{e}-04$ \\
+ & $\Gamma=\operatorname{diag}[1,100]$ & $9.459 \mathrm{e}-04$ & $4.468 \mathrm{e}-05$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Stabilizing Inertia Wheel Pendulum Using a Newly Designed ADRC}
+In this section, the proposed control law is adopted to the typical benchmark equipment, IWP (inertia wheel pendulum) to verify its effectiveness.
+
+\subsection{Design ADRC for IWP}
+A sketch of the IWP is shown in Fig. 3.
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-4(1)}
+\end{center}
+
+Fig. 3 Sketch diagram of IWP
+
+$\theta_{b}$ is the tilt angle of the body, $\theta_{\omega}$ is the wheel angle with respect to the body, $l$ is the distance between the motor axis and rotary axis, $l_{b}$ is the disturbance between the CoM (center of mass) of the body and the rotary axis.
+
+The state space model of IWP is given according to [17]:
+
+$$
+\left\{\begin{array}{l}
+\dot{x}(t)=A x(t)+B_{u} u(t)+B_{f} f(t) \\
+y(t)=C x(t)
+\end{array}\right.
+$$
+
+where
+
+$\mathrm{A}=\left[\begin{array}{cc}0 & 1 \\ \frac{\left(m_{b} l_{b}+m_{\omega} l\right) g}{I_{b}+I_{\omega}+m_{\omega} l^{2}} & \frac{C_{b}}{I_{b}+I_{\omega}+m_{\omega} l^{2}}\end{array}\right]$
+
+$B_{u}=\left[\begin{array}{c}0 \\ -\frac{I_{\omega}}{I_{b}+I_{\omega}+m_{\omega} l^{2}}\end{array}\right], B_{f}=I_{2 \times 2}$
+
+$C=\left[\begin{array}{ll}1 & 0\end{array}\right], \quad f(t)=\left[\begin{array}{c}0 \\ w(t)\end{array}\right]$
+
+where $w(t)$ is an extended disturbance containing nonlinear-part of (20), model uncertainties, measurement noise, and external disturbance.
+
+The state space model of IWP (20) can be rewritten with the use of an extended state $\tilde{x}=\left[x_{1}, x_{2}, x_{3}\right]^{T}$ by introducing a new state variable $x_{3}(t)=\mathrm{w}(\mathrm{t})$ (let $\dot{x}_{3}(t)=h(t)$ ), as the following:
+
+$$
+\left\{\begin{array}{l}
+\dot{\tilde{x}}=\tilde{A} \tilde{x}+\tilde{B}_{u} u+\tilde{B}_{h} h(t) \\
+y=\tilde{C} \tilde{x}(t)
+\end{array}\right.
+$$
+
+where
+
+$$
+\tilde{A}=\left[\begin{array}{ccc}
+0 & 1 & 0 \\
+\frac{\left(m_{b} l_{b}+m_{\omega} l\right) g}{I_{b}+I_{\omega}+m_{\omega} l^{2}} & \frac{C_{b}}{I_{b}+I_{\omega}+m_{\omega} l^{2}} & 1 \\
+0 & 0 & 0
+\end{array}\right]
+$$\$\$
+
+\textbackslash tilde\{B\}\textit{\{u\}=\textbackslash left[\[
+\begin{array}{c}
+0 \\
+-\frac{I_{\omega}}{I_{b}+I_{\omega}+m_{\omega} l^{2}} \\
+0
+\end{array}
+\]\textbackslash right], \textbackslash tilde\{B\}}\{h\}=\textbackslash left[\[
+\begin{array}{l}
+0 \\
+0 \\
+1
+\end{array}
+\]\textbackslash right]
+
+\$\$
+
+$\tilde{C}=\left[\begin{array}{lll}1 & 0 & 0\end{array}\right]$
+
+Then generalized ESO for (21) is given as the following:
+
+$$
+\dot{\hat{x}}(t)=\tilde{A} \hat{x}(t)+\tilde{B}_{u} u+L(y-\tilde{C} \hat{x}(t))
+$$
+
+where $L \in R^{2 n \times r}$ is an observer gain vector and is selected such that $\tilde{A}-L \tilde{C}$ is Hurwitz.
+
+A disturbance compensator for IWP is designed by (7) as the following:
+
+$$
+u_{D}=-\frac{1}{b}\left[\Gamma x+\hat{x}_{3}\right]
+$$
+
+where $b=-\frac{I_{\omega}}{I_{b}+I_{\omega}+m_{\omega} l^{2}}$ and $\Gamma \in R^{1 \times 2}$ is a parameter to be designed.
+
+\subsection{Simulation and Experimental Validation}
+The block diagram of the IWP control system is given in Fig. 4.
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-4}
+\end{center}
+
+Fig. 4 Block diagram of IWP control system
+
+PI2-type controller is used as a speed controller, which is given as the following:
+
+$$
+G_{c}=k_{p}+k_{i} \frac{1}{s}+k_{i i} \frac{1}{s^{2}}
+$$
+
+\subsubsection{Simulation Result}
+The parameters of the speed controller are chosen as $k_{p}=1.797, k_{i}=31.399, k_{i i}=0.5$ such that the bandwidth of the controller should be $30 \mathrm{rad} / \mathrm{s}$.
+
+Let, $Q=\operatorname{diag}(1,1), R=30 \quad$ then $\quad K_{L Q}=$ $[-1620,181]$ is obtained.
+
+Observer matrix is chosen as $L=[60,1100$, $6000000]^{T}$ such that $\tilde{A}-L \tilde{C}$ is Hurwitz.
+
+The design matrix $\Gamma$ is set as $\Gamma=[1,20]$ and $\Gamma=[1,50]$.
+
+Table 2 shows the physical parameters of IWP.
+
+Table 2 Physical parameters of IWP
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+Parameter & Description & Value & Unit \\
+\hline
+$m_{b}$ & Mass of the pendulum & 0.19 & $\mathrm{~kg}$ \\
+$m_{\omega}$ & Mass of the wheel & 0.04 & $\mathrm{~kg}$ \\
+$l_{b}$ & $\begin{array}{l}\text { Distance between the } \\ \text { CoM (center of mass) of } \\ \text { the body and the rotary } \\ \text { axes }\end{array}$ & 0.080 & $\mathrm{~m}$ \\
+ &  &  &  \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+$l$ & $\begin{array}{l}\text { Distance between motor } \\ \text { axis and rotary axis }\end{array}$ & 0.081 & $\mathrm{~m}$ \\
+\hline
+$C_{b}$ & $\begin{array}{l}\text { Friction coefficient of the } \\ \text { body }\end{array}$ & $1.02 \mathrm{e}-3$ & $\mathrm{~kg} \mathrm{~m} 2 / \mathrm{s}$ \\
+\hline
+$C_{\omega}$ & $\begin{array}{l}\text { Friction coefficient of the } \\ \text { wheels }\end{array}$ & $4.92 \mathrm{e}-3$ & $\mathrm{~kg} \mathrm{~m} 2 / \mathrm{s}$ \\
+\hline
+$I_{b}$ & $\begin{array}{l}\text { Inertia moment of the } \\ \text { body }\end{array}$ & $1.89 \mathrm{e}-3$ & $\mathrm{~kg} \mathrm{~m} 2 / \mathrm{s}$ \\
+\hline
+$I_{\omega}$ & $\begin{array}{l}\text { Inertia moment of the } \\ \text { wheel }\end{array}$ & $2.23 e-4$ & $\mathrm{~kg} \mathrm{~m} 2 / \mathrm{s}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+Fig. 5 shows the simulation result from which it is seen that the peak value caused by pulse disturbance is about 0.055 for conventional ADRC but 0.03 and 0.015 for the proposed method. It can also be concluded that in the case of larger $\Gamma$, the peak value is smaller.
+
+IAE indices are given in Table 3.
+
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{2}{c}{Table 3 IAE indices} \\
+\hline
+ & IAE index \\
+\hline
+Conventional ADRC & 0.02755 \\
+Proposed method $(\Gamma=[1,20])$ & 0.01244 \\
+Proposed method $(\Gamma=[1,50])$ & 0.007699 \\
+\hline
+\end{tabular}
+\end{center}
+
+From Table 3, it can be concluded that the IAE index for the proposed method is about one-third or one-fourth of the conventional ADRC.
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-5(2)}
+\end{center}
+
+Fig. 5 Tilt angle of IWP
+
+\subsubsection{Experimental Result}
+The experimental device is shown in Fig. 6. An Arduino Uno was used as the processor. The main body and the wheel are made using a 3D printer. Fig. 7 shows the experimental result of IWP stabilization. From Fig. 7, it can be concluded that the proposed method has strong disturbance rejection ability than that of conventional ADRC.
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-5(1)}
+\end{center}
+
+Fig. 6 Experimental device (inertia wheel pendulum)
+
+\begin{center}
+\includegraphics[max width=\textwidth]{2023_08_27_947b1fad8339d130e960g-5}
+\end{center}
+
+Fig. 7 Experimental result of IWP
+
+\section{Conclusion}
+In this paper, novel design of disturbance compensator in ADRC was presented. Error-based ADRC is adopted to simplify its structure. The LQ method was used to design the state feedback controller of ADRC. A disturbance compensator was designed to make the derivative of the Lyapunov function smaller than that of a conventional disturbance compensator. Simulations and field experiments were conducted to verify the effectiveness of the proposed method. Simulation and experimental results showed that the proposed method had better performance in disturbance attenuation than conventional ADRC. IAE indices also showed the effectiveness of the proposed method. In this paper, control effort is not considered. As remark 2 says $\Gamma$ should be chosen as the trade-off between the magnitude of control effort and the convergence rate. How to select $\Gamma$ should be considered in future work.
+
+\section{References}
+[1] HAN J. From PID to active disturbance rejection control. IEEE Transactions on Industrial Electronics, 2009, 56: 900906.
+
+[2] GAO Z.-Q. Active disturbance rejection control: From an enduring idea to an emerging technology. In: Proceedings of the 2015 10th International Workshop on Robot Motion and Control, Poznan, Poland, 2015: 269-282.
+
+[3] FENG H., and GUO B.-Z. Active disturbance rejection control: old and new results. Annual Reviews in Control, 2017, $\quad 44:$ 238-248. \href{http://dx.doi.org/10.1016/j.arcontrol.2017.05.003}{http://dx.doi.org/10.1016/j.arcontrol.2017.05.003}
+
+[4] WU Z., HE T., LI D., XUEA Y., SUNB L., and SUNC L. Superheated steam temperature control based on modified active disturbance rejection control. Control Engineering Practice, 2019, 83: 83-97. \href{https://doi.org/10.1016/j.conengprac.2018.09.027}{https://doi.org/10.1016/j.conengprac.2018.09.027}
+
+[5] TIAN J., ZHANG S., ZHANG Y., and LI T. Active disturbance rejection control based robust output feedback autopilot design for airbreathing hypersonic vehicles. Instrumentation, Systems, and Automation Society Transactions, $\quad 2018, \quad$ 74: $45-59$. \href{https://doi.org/10.1016/j.isatra.2018.01.002}{https://doi.org/10.1016/j.isatra.2018.01.002}
+
+[6] CHU Z., SUN Y., WU C., and SEPEHRI N. Active disturbance rejection control applied to automated steering for lane keeping in autonomous vehicles. Control Engineering Practice, 2018, 74: 13-21. \href{https://doi.org/10.1016/j.conengprac.2018.02.002}{https://doi.org/10.1016/j.conengprac.2018.02.002} [7] LOTUFO M.A., COLANGELO L., PEREZMONTENEGRO C., CANUTO E., and NOVARA C. UAV quadrotor attitude control: An ADRC-EMC combined approach. Control Engineering Practice, 2019, 84: 13-22. \href{https://doi.org/10.1016/j.conengprac.2018.11.002}{https://doi.org/10.1016/j.conengprac.2018.11.002}
+
+[8] PRASAD S., PURWAR S., and KISHOR N. Load frequency regulation using observer based non-linear sliding mode control. Electrical Power and Energy Systems, 2019, 104: 178-193. \href{https://doi.org/10.1016/j.ijepes.2018.06.035}{https://doi.org/10.1016/j.ijepes.2018.06.035}
+
+[9] REN L., MAO C., SONG Z., and LIU F. Study on active disturbance rejection control with actuator saturation to reduce the load of a driving chain in wind turbines. Renewable Energy, 2019, 133: 268-274. \href{https://doi.org/10.1016/j.renene.2018.10.041}{https://doi.org/10.1016/j.renene.2018.10.041}
+
+[10] HAN J., WANG H., JIAO G., CUI L., and WANG Y. Research on active disturbance rejection control technology of electromechanical actuators. Electronics, 2018, 7(9): 174. \href{http://dx.doi.org/10.3390/electronics7090174}{http://dx.doi.org/10.3390/electronics7090174}
+
+[11] SUN L., HUA Q., SHEN J., XUE Y., LI D., and LEE K.Y. Multi-objective optimization for advanced superheater steam temperature control in a $300 \mathrm{MW}$ power plant. Applied Energy, 2017, 208: 592-606. \href{http://dx.doi.org/10.1016/j.apenergy.2017.09.095}{http://dx.doi.org/10.1016/j.apenergy.2017.09.095}
+
+[12] GAO Z. Scaling and bandwidth-parameterization based controller tuning. In: Proceedings of the American Control Conference, Denver, CO, USA, 2003: 4989-4996. \href{http://dx.doi.org/10.1109/ACC.2003.1242516}{http://dx.doi.org/10.1109/ACC.2003.1242516}
+
+[13] TAN W., and FU C. Linear active disturbance-rejection control: Analysis and tuning via IMC. IEEE Transactions on Industrial Electronics, 2016, 63: 2350-2359.
+
+[14] MADONSKI R., SHAO S., ZHANG H., GAO Z., YANG J., and LIA S. General error-based active disturbance rejection control for swift industrial implementations. Control Engineering Practice, 2019, 84: 218-229. \href{https://doi.org/10.1016/j.conengprac.2018.11.021}{https://doi.org/10.1016/j.conengprac.2018.11.021}
+
+[15] SUN J., PU Z., and YI J. Conditional disturbance negation based active disturbance control for hypersonic vehicles, Control Engineering Practice, 2019, 84: 159-171. \href{https://doi.org/10.1016/j.conengprac.2018.11.016}{https://doi.org/10.1016/j.conengprac.2018.11.016}
+
+[16] GUO B., and ZHAO Z. Active Disturbance Rejection Control for Nonlinear Systems. John Wiley and Sons, 2016.
+
+[17] GAJAMOHAN M., MERZ M., and THOMMEN I. The Cubli: A Cube that can Jump Up and Balance. In: IEEE International Conference on Intelligent Robots and Systems, 2012: 438-442.
+
+\section{\begin{CJK}{UTF8}{mj}参考文\end{CJK}:}
+[1] HAN J. \begin{CJK}{UTF8}{mj}從比例積分微分\end{CJK} \begin{CJK}{UTF8}{mj}到主動抗擾控制\end{CJK}。\begin{CJK}{UTF8}{mj}電氣和電\end{CJK} \begin{CJK}{UTF8}{mj}子工程師學會工業電子彙刊\end{CJK}，2009，56：900-906。
+
+[2] GAO Z.-Q. \begin{CJK}{UTF8}{mj}主動抗擾控制\end{CJK}：\begin{CJK}{UTF8}{mj}從經久不衰的理念到新興\end{CJK} \begin{CJK}{UTF8}{mj}技術\end{CJK}。\begin{CJK}{UTF8}{mj}見\end{CJK}：2015 \begin{CJK}{UTF8}{mj}年第十屆機器人運動與控制國際研討會\end{CJK} \begin{CJK}{UTF8}{mj}論文集\end{CJK}，\begin{CJK}{UTF8}{mj}波蘭波茲南\end{CJK}，2015：269-282。
+
+[3] FENG H., \begin{CJK}{UTF8}{mj}和\end{CJK} GUO B.-Z. \begin{CJK}{UTF8}{mj}自抗擾控制\end{CJK}：\begin{CJK}{UTF8}{mj}新舊結果\end{CJK}。\begin{CJK}{UTF8}{mj}控\end{CJK} \begin{CJK}{UTF8}{mj}制年度回顧\end{CJK}，2017，44: 238-248。 \href{http://dx.doi.org/10.1016/j.arcontrol.2017.05.003}{http://dx.doi.org/10.1016/j.arcontrol.2017.05.003}
+
+[4] WU Z., HE T., LI D., XUEA Y., SUNB L., \begin{CJK}{UTF8}{mj}和\end{CJK} SUNC L. \begin{CJK}{UTF8}{mj}基於改進的主動抗擾控制的過熱蒸汽溫度控制\end{CJK}。\begin{CJK}{UTF8}{mj}控制工\end{CJK}
+
+\begin{CJK}{UTF8}{mj}程\end{CJK} \begin{CJK}{UTF8}{mj}實\end{CJK} \begin{CJK}{UTF8}{mj}踐\end{CJK} ， $2019 \quad, \quad 83 \quad$ ： 83-97 。
+
+\href{https://doi.org/10.1016/j.conengprac.2018.09.027}{https://doi.org/10.1016/j.conengprac.2018.09.027}
+[5] TIAN J., ZHANG S., ZHANG Y., \begin{CJK}{UTF8}{mj}和\end{CJK} LI T. \begin{CJK}{UTF8}{mj}基於主動抗\end{CJK} \begin{CJK}{UTF8}{mj}擾控制的吸氣式高超聲速飛行器魯棒輸出反饋自動駕駛\end{CJK} \begin{CJK}{UTF8}{mj}儀設計\end{CJK}。\begin{CJK}{UTF8}{mj}儀器儀表\end{CJK}、\begin{CJK}{UTF8}{mj}系統和自動化學會交易\end{CJK}，2018，74： 45-59。\href{https://doi.org/10.1016/j.isatra.2018.01.002}{https://doi.org/10.1016/j.isatra.2018.01.002}
+
+[6] CHU Z.、SUN Y.、WU C. \begin{CJK}{UTF8}{mj}和\end{CJK} SEPEHRI N. \begin{CJK}{UTF8}{mj}主動干擾\end{CJK} \begin{CJK}{UTF8}{mj}抑制控制應用於自動駕駛汽車車道保持的自動轉向\end{CJK}。\begin{CJK}{UTF8}{mj}控\end{CJK} \begin{CJK}{UTF8}{mj}制\end{CJK} \begin{CJK}{UTF8}{mj}工\end{CJK} \begin{CJK}{UTF8}{mj}程\end{CJK} \begin{CJK}{UTF8}{mj}實\end{CJK} \begin{CJK}{UTF8}{mj}踐\end{CJK} ， $2018 ， 74$ ： 13-21。 \href{https://doi.org/10.1016/j.conengprac.2018.02.002}{https://doi.org/10.1016/j.conengprac.2018.02.002}
+
+[7] LOTUFO M.A. 、 COLANGELO L. 、 PEREZMONTENEGRO C. CANUTO E. \begin{CJK}{UTF8}{mj}和\end{CJK} NOVARA C. \begin{CJK}{UTF8}{mj}无人\end{CJK} \begin{CJK}{UTF8}{mj}机四旋翼姿態控制\end{CJK}：\begin{CJK}{UTF8}{mj}主動抗擾控制\end{CJK}-\begin{CJK}{UTF8}{mj}嵌入式模型控制\end{CJK} \begin{CJK}{UTF8}{mj}組\end{CJK} \begin{CJK}{UTF8}{mj}合方法\end{CJK}。\begin{CJK}{UTF8}{mj}控制工程實踐\end{CJK}，2019，84：13-22。 \href{https://doi.org/10.1016/j.conengprac.2018.11.002}{https://doi.org/10.1016/j.conengprac.2018.11.002}
+
+[8] PRASAD S.、PURWAR S. \begin{CJK}{UTF8}{mj}和\end{CJK} KISHOR N. \begin{CJK}{UTF8}{mj}使用基於觀\end{CJK} \begin{CJK}{UTF8}{mj}測器的非線性滑模控制的負載頻率調節\end{CJK}。\begin{CJK}{UTF8}{mj}電力和能源系\end{CJK} \begin{CJK}{UTF8}{mj}統\end{CJK} ， $2019 ， 104$ : 178-193 。 \href{https://doi.org/10.1016/j.ijepes.2018.06.035}{https://doi.org/10.1016/j.ijepes.2018.06.035}
+
+[9] REN L., MAO C., SONG Z., \begin{CJK}{UTF8}{mj}和\end{CJK} LIU F. \begin{CJK}{UTF8}{mj}執行器飽和的\end{CJK} \begin{CJK}{UTF8}{mj}主動抗擾控制研究以減少風力渦輪機驅動鏈的負載\end{CJK}。\begin{CJK}{UTF8}{mj}可\end{CJK} \begin{CJK}{UTF8}{mj}再生能源\end{CJK}，2019，133：268-274。 \href{https://doi.org/10.1016/j.renene.2018.10.041}{https://doi.org/10.1016/j.renene.2018.10.041}
+
+[10] HAN J., WANG H., JIAO G., CUI L., \begin{CJK}{UTF8}{mj}和\end{CJK} WANG Y. \begin{CJK}{UTF8}{mj}機\end{CJK} \begin{CJK}{UTF8}{mj}電執行器自抗擾控制技術研究\end{CJK}。\begin{CJK}{UTF8}{mj}電子學\end{CJK}, 2018, 7(9): 174. \href{http://dx.doi.org/10.3390/electronics7090174}{http://dx.doi.org/10.3390/electronics7090174}
+
+[11] SUN L., HUA Q., SHEN J., XUE Y., LI D., \begin{CJK}{UTF8}{mj}和\end{CJK} LEE K.Y。300\begin{CJK}{UTF8}{mj}兆瓦電廠高級過熱器蒸汽溫度控制的多目標優\end{CJK} \begin{CJK}{UTF8}{mj}化\end{CJK}。\begin{CJK}{UTF8}{mj}應用能源\end{CJK}, 2017,208 : 592-606。 \href{http://dx.doi.org/10.1016/j.apenergy.2017.09.095}{http://dx.doi.org/10.1016/j.apenergy.2017.09.095}
+
+[12] GAO Z. \begin{CJK}{UTF8}{mj}基於縮放和帶寬參數化的控制器調整\end{CJK}。\begin{CJK}{UTF8}{mj}在\end{CJK} : \begin{CJK}{UTF8}{mj}美國控制會議論文集\end{CJK}，\begin{CJK}{UTF8}{mj}美國科羅拉多州丹佛市\end{CJK}，2003：
+
+4989-4996。\href{http://dx.doi.org/10.1109/ACC.2003.1242516}{http://dx.doi.org/10.1109/ACC.2003.1242516}
+
+[13] TAN W. \begin{CJK}{UTF8}{mj}和\end{CJK} FU C. \begin{CJK}{UTF8}{mj}線性主動抗擾控制\end{CJK}：\begin{CJK}{UTF8}{mj}通過\end{CJK}IMC\begin{CJK}{UTF8}{mj}進行\end{CJK} \begin{CJK}{UTF8}{mj}分析和調整\end{CJK}。\begin{CJK}{UTF8}{mj}電氣和電子工程師學會工業電子氣刊\end{CJK}, 2016，63：2350-2359。
+
+[14] MADONSKI R., SHAO S., ZHANG H., GAO Z., YANG J., \begin{CJK}{UTF8}{mj}和\end{CJK} LIA S. \begin{CJK}{UTF8}{mj}用於快速工業實施的基於一般誤差的\end{CJK} \begin{CJK}{UTF8}{mj}主動干擾抑制控制\end{CJK}。\begin{CJK}{UTF8}{mj}控制工程實踐\end{CJK}，2019，84：218-229 。\href{https://doi.org/10.1016/j.conengprac.2018.11.021}{https://doi.org/10.1016/j.conengprac.2018.11.021}
+
+[15] SUN J., PU Z., \begin{CJK}{UTF8}{mj}和\end{CJK} YI J. \begin{CJK}{UTF8}{mj}基於條件擾動否定的高超聲\end{CJK} \begin{CJK}{UTF8}{mj}速飛行器主動擾動控制\end{CJK}, \begin{CJK}{UTF8}{mj}控制工程實踐\end{CJK}, 2019, 84: 159-171. \href{https://doi.org/10.1016/j.conengprac.2018.11.016}{https://doi.org/10.1016/j.conengprac.2018.11.016}
+
+[16] GUO B. \begin{CJK}{UTF8}{mj}和\end{CJK} ZHAO Z. \begin{CJK}{UTF8}{mj}非線性系統的主動抗擾控制\end{CJK}。 \begin{CJK}{UTF8}{mj}約翰威利父子\end{CJK}，2016\begin{CJK}{UTF8}{mj}年\end{CJK}。
+
+[17] GAJAMOHAN M. MERZ M. \begin{CJK}{UTF8}{mj}和\end{CJK} THOMMEN I. \begin{CJK}{UTF8}{mj}機器\end{CJK} \begin{CJK}{UTF8}{mj}人立方體\end{CJK}：\begin{CJK}{UTF8}{mj}可以跳躍和平衡的立方體\end{CJK}。\begin{CJK}{UTF8}{mj}在\end{CJK}：\begin{CJK}{UTF8}{mj}電氣和電子\end{CJK} \begin{CJK}{UTF8}{mj}工程師學會\end{CJK} \begin{CJK}{UTF8}{mj}智能機器人和系統國際會議\end{CJK}，2012：438- 442。
+
+
+\end{document}
